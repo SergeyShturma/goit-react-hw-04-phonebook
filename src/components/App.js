@@ -1,56 +1,52 @@
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 import css from 'components/App.module.css';
 import ContactList from 'components/ContactList/ContactList';
 import ContactForm from 'components/ContactForm/ContactForm';
 import Filter from 'components/Filter/Filter';
+import Notification from 'components/Notification/Notification';
+import NotificationGood from 'components/NotificationGood/NotificationGood';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-class App extends Component {
-  state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    filter: '',
-  };
+export default function App() {
+  const [filter, setFilter] = useState('');
+  const [contacts, setContacts] = useState(() => {
+    return JSON.parse(window.localStorage.getItem('contacts')) ?? [];
+  });
 
-  nameId = nanoid();
-  numberId = nanoid();
+  useEffect(() => {
+    window.localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  onSubmit = data => {
-    console.log(data);
-  };
-
-  addContact = (name, number) => {
-    const { contacts } = this.state;
+  const addContact = (name, number) => {
     const newContact = {
       id: nanoid(),
       name,
       number,
     };
-    contacts.some(
-      contact => contact.name.toLowerCase() === newContact.name.toLowerCase()
-    )
-      ? alert(`${name} is already in contacts`)
-      : this.setState(prevState => ({
-          contacts: [newContact, ...prevState.contacts],
-        }));
+
+    if (
+      contacts.some(
+        contact => contact.name.toLowerCase() === newContact.name.toLowerCase()
+      )
+    ) {
+      toast(`${name} is already in contacts.`);
+      return;
+    }
+
+    setContacts(prevContacts => [newContact, ...prevContacts]);
   };
 
-  onDelete = id => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== id),
-    }));
+  const deleteContact = id => {
+    setContacts(contacts.filter(contact => contact.id !== id));
   };
 
-  changeFilter = e => {
-    this.setState({ filter: e.currentTarget.value });
+  const changeFilter = e => {
+    setFilter(e.currentTarget.value);
   };
 
-  getVisibleContacts = () => {
-    const { filter, contacts } = this.state;
+  const getVisibleContacts = () => {
     const normalizedFilter = filter.toLowerCase();
 
     return contacts.filter(contact =>
@@ -58,34 +54,26 @@ class App extends Component {
     );
   };
 
-  componentDidMount() {
-    const parsedContacts = JSON.parse(localStorage.getItem('contacts'));
-
-    parsedContacts && this.setState({ contacts: parsedContacts });
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    this.state.contacts !== prevState.contacts &&
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-  }
-
-  render() {
-    const { addContact, changeFilter, onDelete, getVisibleContacts } = this;
-    const { filter } = this.state;
-
-    return (
-      <div className={css.main}>
-        <h1 className={css.title}>Phonebook</h1>
-        <ContactForm onSubmit={addContact} />
-        <h2 className={css.title}>Contacts</h2>
-        <Filter value={filter} onChange={changeFilter} />
-        <ContactList
-          getVisibleContacts={getVisibleContacts}
-          onDelete={onDelete}
-        />
-      </div>
-    );
-  }
+  return (
+    <div className={css.main}>
+      <h1 className={css.title}>Phonebook</h1>
+      <ContactForm onSubmit={addContact} />
+      <h2 className={css.title}>Contacts</h2>
+      <Filter value={filter} onChange={changeFilter} />
+      <>
+        {getVisibleContacts().length ? (
+          <>
+            <ContactList
+              getVisibleContacts={getVisibleContacts}
+              onDelete={deleteContact}
+            />
+            <NotificationGood />
+          </>
+        ) : (
+          <Notification />
+        )}
+      </>
+      <ToastContainer autoClose={2000} />
+    </div>
+  );
 }
-
-export default App;
