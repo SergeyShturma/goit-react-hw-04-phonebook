@@ -1,0 +1,17 @@
+.contactList {
+  list-style: none;
+  font-size: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  width: 300px;
+  padding: 15px;
+  border-radius: 7px;
+  border: 1px dashed rgb(49, 20, 20);
+  background-color: aliceblue;
+}
+
+.item {
+  display: flex;
+}
